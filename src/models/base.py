@@ -1,6 +1,6 @@
 from torch import nn
 from spikingjelly.activation_based import encoding, functional
-
+import torch
 
 class BaseJellyNet(nn.Module):
     def __init__(self,

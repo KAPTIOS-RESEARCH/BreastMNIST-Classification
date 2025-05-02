@@ -5,7 +5,7 @@ from src.core.experiment import AbstractExperiment
 
 if __name__ == "__main__":
 
-    project_name = "medmnist_classification"
+    project_name = "SNN MedMNIST BN"
 
     logging.basicConfig(
         level=logging.INFO,

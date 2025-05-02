@@ -49,15 +49,15 @@ class BaseTrainer(object):
             train_loss, train_preds, train_targets = self.train(train_dl)
             test_loss, test_preds, test_targets = self.test(test_dl)
             
-            # COMPUTE METRICS HERE
+            train_accuracy = (train_preds.argmax(dim=1) == train_targets).float().mean().item()
+            test_accuracy = (test_preds.argmax(dim=1) == test_targets).float().mean().item()
             
             if self.parameters['track']:
                 wandb.log({
                     f"Train/{self.parameters['loss']['class_name']}": train_loss,
                     f"Test/{self.parameters['loss']['class_name']}": test_loss,
-                    ## ADD METRIC WANDB PLOT HERE
-                    # f"Train/Accuracy": train_acc,
-                    # f"Test/Accuracy": test_acc,
+                    f"Train/Accuracy": train_accuracy,
+                    f"Test/Accuracy": test_accuracy,
                     "_step_": epoch
                 })
                 
@@ -66,7 +66,7 @@ class BaseTrainer(object):
 
             self.early_stop(self.model, test_loss, log_dir, epoch)
 
-            logging.info(f"Epoch {epoch + 1} / {num_epochs} - Train/Test {self.parameters['loss']['class_name']}: {train_loss:.4f} | {test_loss:.4f}")
+            logging.info(f"Epoch {epoch + 1} / {num_epochs} - Train/Test {self.parameters['loss']['class_name']}: {train_loss:.4f} | {test_loss:.4f} - Train/Test Acc : {train_accuracy:.2f} | {test_accuracy:.2f}")
 
             if self.early_stop.stop:
                 logging.info(
