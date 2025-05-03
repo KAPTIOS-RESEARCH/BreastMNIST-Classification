@@ -17,7 +17,7 @@ dataloader:
     data_dir: ./data
     image_size: *img_size
     batch_size: 8
-    num_workers: 8
+    num_workers: 4
     debug: False
 
 trainer:
@@ -26,7 +26,7 @@ trainer:
   parameters:
     num_epochs: 10
     early_stopping_patience: 5
-    lr_scheduler: plateau
+    lr_scheduler: null
     lr: 0.00002
     weight_decay: 0.00001
     track: *track
