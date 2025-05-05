@@ -1,4 +1,4 @@
-name: medmnist_bn_128
+name: tissuemnist_bn
 seed: 1234
 track: &track False
 model:
@@ -6,29 +6,30 @@ model:
   module_name: src.models.csnn
   parameters:
     in_channels: 1
-    out_channels: 2
-    img_size: &img_size 128
+    out_channels: 8
+    img_size: &img_size 28
     n_steps: 5
     encoding_method: direct
 dataloader:
-  class_name: BreastMNISTDataloader
-  module_name: src.data.loaders.BreastMNIST
+  class_name: MedMNISTDataloader
+  module_name: src.data.loaders.medmnist
   parameters:
     data_dir: ./data
+    dataset_name: TissueMNIST
     image_size: *img_size
-    batch_size: 8
-    num_workers: 4
-    debug: False
+    batch_size: 16
+    num_workers: 8
+    debug: True
 
 trainer:
   class_name: medmnistTrainer
   module_name: tasks.medmnist.trainer
   parameters:
-    num_epochs: 10
-    early_stopping_patience: 5
+    num_epochs: 100
+    early_stopping_patience: null
     lr_scheduler: null
-    lr: 0.00002
-    weight_decay: 0.00001
+    lr: 0.0001
+    weight_decay: 0.
     track: *track
     loss:
       class_name: MSELoss

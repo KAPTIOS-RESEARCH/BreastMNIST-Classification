@@ -22,11 +22,9 @@ if __name__ == "__main__":
     experiment_cls = config['experiment']['class_name']
     experiment_md = config['experiment']['module_name']
     experiment: AbstractExperiment = instanciate_module(
-        experiment_md, 
+        experiment_md,
         experiment_cls,
         {"config": config}
     )
 
     experiment.run_training()
-    
-    

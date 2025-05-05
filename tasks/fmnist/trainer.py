@@ -1,4 +1,5 @@
 import torch
+import logging
 from torch import nn
 from tqdm import tqdm
 from src.core.trainer import BaseTrainer
@@ -6,10 +7,10 @@ from spikingjelly.activation_based import functional
 import torch.nn.functional as F
 
 
-class medmnistTrainer(BaseTrainer):
+class FashionMNISTTrainer(BaseTrainer):
 
     def __init__(self, model: nn.Module, parameters: dict, device: str):
-        super(medmnistTrainer, self).__init__(model, parameters, device)
+        super(FashionMNISTTrainer, self).__init__(model, parameters, device)
         if not self.criterion:
             self.criterion = nn.MSELoss()
 
@@ -24,9 +25,11 @@ class medmnistTrainer(BaseTrainer):
                 data, targets = data.to(self.device), targets.to(self.device)
                 one_hot_targets = F.one_hot(
                     targets.long(), self.model.n_output).float()
+                logging.info(one_hot_targets.shape)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
-                loss = self.criterion(outputs, one_hot_targets.squeeze(1))
+                logging.info(outputs)
+                loss = self.criterion(outputs, one_hot_targets)
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss.item()
@@ -54,7 +57,7 @@ class medmnistTrainer(BaseTrainer):
                     outputs = self.model(data)
                     one_hot_targets = F.one_hot(
                         targets.long(), self.model.n_output).float()
-                    loss = self.criterion(outputs, one_hot_targets.squeeze(1))
+                    loss = self.criterion(outputs, one_hot_targets)
                     test_loss += loss.item()
                     all_preds.append(outputs)
                     all_targets.append(targets)
