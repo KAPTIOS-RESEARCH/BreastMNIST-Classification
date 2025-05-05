@@ -1,19 +1,22 @@
 import torch
-import logging
 from torch import nn
 from tqdm import tqdm
 from src.core.trainer import BaseTrainer
-from spikingjelly.activation_based import functional
-import torch.nn.functional as F
+from torchmetrics import Accuracy
+from src.models.base import BaseTorchModel
 
-
-class FashionMNISTTrainer(BaseTrainer):
-
-    def __init__(self, model: nn.Module, parameters: dict, device: str):
-        super(FashionMNISTTrainer, self).__init__(model, parameters, device)
+class CNNTrainer(BaseTrainer):
+    def __init__(self, model: BaseTorchModel, parameters: dict, device: str):
+        super(CNNTrainer, self).__init__(model, parameters, device)
         if not self.criterion:
-            self.criterion = nn.MSELoss()
+            self.criterion = nn.CrossEntropyLoss()
 
+        if not self.metric:
+            self.metric = Accuracy(
+                task='multiclass' if self.model.n_output > 2 else 'binary',
+                num_classes=self.model.n_output,
+            )
+        
     def train(self, train_loader):
         self.model.train()
         train_loss = 0.0
@@ -23,25 +26,22 @@ class FashionMNISTTrainer(BaseTrainer):
             for sample in train_loader:
                 data, targets = sample
                 data, targets = data.to(self.device), targets.to(self.device)
-                one_hot_targets = F.one_hot(
-                    targets.long(), self.model.n_output).float()
-                logging.info(one_hot_targets.shape)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
-                logging.info(outputs)
-                loss = self.criterion(outputs, one_hot_targets)
+                loss = self.criterion(outputs, targets)
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss.item()
                 all_preds.append(outputs)
                 all_targets.append(targets)
-                functional.reset_net(self.model)
                 pbar.update(1)
 
-        all_targets = torch.cat(all_targets)
-        all_preds = torch.cat(all_preds)
+        all_targets = torch.cat(all_targets).cpu()
+        all_preds = torch.cat(all_preds).cpu()
+        
+        train_metric = self.metric(all_preds.argmax(dim=1), all_targets)
         train_loss /= len(train_loader)
-        return train_loss, all_preds, all_targets
+        return train_loss, train_metric
 
     def test(self, val_loader):
         self.model.eval()
@@ -52,19 +52,16 @@ class FashionMNISTTrainer(BaseTrainer):
             with tqdm(val_loader, leave=False, desc="Running testing phase") as pbar:
                 for idx, sample in enumerate(val_loader):
                     data, targets = sample
-                    data, targets = data.to(
-                        self.device), targets.to(self.device)
+                    data, targets = data.to(self.device), targets.to(self.device)
                     outputs = self.model(data)
-                    one_hot_targets = F.one_hot(
-                        targets.long(), self.model.n_output).float()
-                    loss = self.criterion(outputs, one_hot_targets)
+                    loss = self.criterion(outputs, targets)
                     test_loss += loss.item()
                     all_preds.append(outputs)
                     all_targets.append(targets)
-                    functional.reset_net(self.model)
                     pbar.update(1)
 
-        all_targets = torch.cat(all_targets)
-        all_preds = torch.cat(all_preds)
+        all_targets = torch.cat(all_targets).cpu()
+        all_preds = torch.cat(all_preds).cpu()
+        test_metric = self.metric(all_preds.argmax(dim=1), all_targets)
         test_loss /= len(val_loader)
-        return test_loss, all_preds, all_targets
+        return test_loss, test_metric

@@ -37,7 +37,8 @@ class MedMNISTDataset(Dataset):
         return len(self.dataset)
 
     def __getitem__(self, idx: int):
-        return self.dataset[idx]
+        x, y = self.dataset[idx]
+        return x, y.squeeze(0)
 
 # class KSpaceBreastMNIST(BaseMedMnistDataset):
 #     def __init__(self, data_dir, image_size: int = 128, split='train', transform=None):

@@ -21,7 +21,7 @@ dataloader:
 
 trainer:
   class_name: FashionMNISTTrainer
-  module_name: tasks.fmnist.trainer
+  module_name: tasks.snn.fmnist.trainer
   parameters:
     num_epochs: 100
     early_stopping_patience: 100

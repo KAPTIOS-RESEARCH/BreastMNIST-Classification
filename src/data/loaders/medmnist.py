@@ -34,6 +34,19 @@ class MedMNISTDataloader(object):
         self.num_workers = num_workers
         self.image_size = image_size
 
+    def _create_random_sampler(self, dataset):
+        labels = np.array([label for _, label in dataset])
+        if labels.ndim > 1:
+            labels = labels.flatten()
+        labels = torch.tensor(labels, dtype=torch.int64)
+        class_counts = torch.bincount(labels)
+        class_weights = 1.0 / class_counts.float()
+        sampler_weights = [class_weights[label] for _, label in dataset]
+        sampler = WeightedRandomSampler(
+            weights=sampler_weights, num_samples=len(dataset), replacement=True)
+        return sampler
+
+
     def train(self):
         train_dataset = MedMNISTDataset(
             self.data_dir,
@@ -44,9 +57,9 @@ class MedMNISTDataloader(object):
 
         if self.debug:
             train_dataset = Subset(
-                train_dataset, range(self.batch_size * 1000))
+                train_dataset, range(self.batch_size * 2))
 
-        random_sampler = create_random_sampler(train_dataset)
+        random_sampler = self._create_random_sampler(train_dataset)
 
         return DataLoader(train_dataset, sampler=random_sampler, batch_size=self.batch_size, num_workers=self.num_workers, pin_memory=True if torch.cuda.is_available() else False)
 

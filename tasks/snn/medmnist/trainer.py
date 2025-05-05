@@ -6,10 +6,10 @@ from spikingjelly.activation_based import functional
 import torch.nn.functional as F
 
 
-class medmnistTrainer(BaseTrainer):
+class MedMNISTTrainer(BaseTrainer):
 
     def __init__(self, model: nn.Module, parameters: dict, device: str):
-        super(medmnistTrainer, self).__init__(model, parameters, device)
+        super(MedMNISTTrainer, self).__init__(model, parameters, device)
         if not self.criterion:
             self.criterion = nn.MSELoss()
 

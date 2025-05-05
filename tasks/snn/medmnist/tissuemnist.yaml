@@ -22,8 +22,8 @@ dataloader:
     debug: True
 
 trainer:
-  class_name: medmnistTrainer
-  module_name: tasks.medmnist.trainer
+  class_name: MedMNISTTrainer
+  module_name: tasks.snn.medmnist.trainer
   parameters:
     num_epochs: 100
     early_stopping_patience: null

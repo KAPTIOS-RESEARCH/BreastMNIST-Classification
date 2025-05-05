@@ -6,25 +6,23 @@ from torch.optim import Adam
 from torch.optim.lr_scheduler import ExponentialLR, CosineAnnealingLR, ReduceLROnPlateau
 from src.utils.config import instanciate_module
 from src.optimisation.early_stopping import EarlyStopping
-
+from src.models.base import BaseTorchModel
 
 class BaseTrainer(object):
 
-    def __init__(self, model: nn.Module, parameters: dict, device: str):
+    def __init__(self, model: BaseTorchModel, parameters: dict, device: str):
         self.model = model
         self.parameters = parameters
         self.device = device
         self.early_stop = EarlyStopping(
             patience=parameters['early_stopping_patience'], enable_wandb=parameters['track']) if parameters['early_stopping_patience'] else None
 
-        # OPTIMIZER
         self.optimizer = Adam(
             self.model.parameters(),
             lr=parameters['lr'],
             weight_decay=parameters['weight_decay']
         )
 
-        # LR SCHEDULER
         self.lr_scheduler = None
         lr_scheduler_type = parameters['lr_scheduler'] if 'lr_scheduler' in parameters.keys(
         ) else 'none'
@@ -44,6 +42,10 @@ class BaseTrainer(object):
                                             parameters['loss']['class_name'],
                                             parameters['loss']['parameters'])
 
+        self.metric = instanciate_module(parameters['metric']['module_name'],
+                                            parameters['metric']['class_name'],
+                                            parameters['metric']['parameters'])
+        
     def train(self, dl: DataLoader):
         raise NotImplementedError
 
@@ -53,20 +55,15 @@ class BaseTrainer(object):
     def fit(self, train_dl, test_dl, log_dir: str):
         num_epochs = self.parameters['num_epochs']
         for epoch in range(num_epochs):
-            train_loss, train_preds, train_targets = self.train(train_dl)
-            test_loss, test_preds, test_targets = self.test(test_dl)
-
-            train_accuracy = (train_preds.argmax(dim=1) ==
-                              train_targets).float().mean().item()
-            test_accuracy = (test_preds.argmax(dim=1) ==
-                             test_targets).float().mean().item()
+            train_loss, train_metric = self.train(train_dl)
+            test_loss, test_metric = self.test(test_dl)
 
             if self.parameters['track']:
                 wandb.log({
                     f"Train/{self.parameters['loss']['class_name']}": train_loss,
                     f"Test/{self.parameters['loss']['class_name']}": test_loss,
-                    f"Train/Accuracy": train_accuracy,
-                    f"Test/Accuracy": test_accuracy,
+                    f"Train/{self.parameters['metric']['class_name']}": train_metric,
+                    f"Test/{self.parameters['metric']['class_name']}": test_metric,
                     "_step_": epoch
                 })
 
@@ -74,7 +71,7 @@ class BaseTrainer(object):
                 self.lr_scheduler.step(test_loss)
 
             logging.info(
-                f"Epoch {epoch + 1} / {num_epochs} - Train/Test {self.parameters['loss']['class_name']}: {train_loss:.4f} | {test_loss:.4f} - Train/Test Acc : {train_accuracy:.2f} | {test_accuracy:.2f}")
+                f"Epoch {epoch + 1} / {num_epochs} - Train/Test {self.parameters['loss']['class_name']}: {train_loss:.4f} | {test_loss:.4f} - Train/Test {self.parameters['metric']['class_name']} : {train_metric:.2f} | {test_metric:.2f}")
 
             if self.early_stop is not None:
                 self.early_stop(self.model, test_loss, log_dir, epoch)

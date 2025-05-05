@@ -7,10 +7,13 @@ if __name__ == "__main__":
 
     project_name = "SNN MedMNIST BN"
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format=f'%(asctime)s - {project_name} Model Training - %(levelname)s - %(message)s'
-    )
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(f'%(asctime)s - {project_name} Model Training - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    root_logger.handlers = [handler] 
 
     parser = ArgumentParser()
     parser.add_argument("--config_path", type=str, required=True)

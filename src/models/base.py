@@ -1,6 +1,22 @@
 from torch import nn
 from spikingjelly.activation_based import encoding, functional
-import torch
+
+
+class BaseTorchModel(nn.Module):
+    def __init__(self,
+                 n_input: int = 1,
+                 n_output: int = 10):
+        """Constructor of BaseTorchModel Class
+
+        Args:
+            n_input (int, optional): The number of input dimensions. Defaults to 1.
+            n_output (int, optional): The number of output neurons. Defaults to 10.
+        """
+        super().__init__()
+
+        self.n_input = n_input
+        self.n_output = n_output
+
 
 class BaseJellyNet(nn.Module):
     def __init__(self,
