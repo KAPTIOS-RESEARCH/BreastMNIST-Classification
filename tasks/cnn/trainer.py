@@ -10,12 +10,6 @@ class CNNTrainer(BaseTrainer):
         super(CNNTrainer, self).__init__(model, parameters, device)
         if not self.criterion:
             self.criterion = nn.CrossEntropyLoss()
-
-        if not self.metric:
-            self.metric = Accuracy(
-                task='multiclass' if self.model.n_output > 2 else 'binary',
-                num_classes=self.model.n_output,
-            )
         
     def train(self, train_loader):
         self.model.train()
@@ -39,9 +33,9 @@ class CNNTrainer(BaseTrainer):
         all_targets = torch.cat(all_targets).cpu()
         all_preds = torch.cat(all_preds).cpu()
         
-        train_metric = self.metric(all_preds.argmax(dim=1), all_targets)
+        train_metrics = self.get_metrics(all_preds, all_targets)
         train_loss /= len(train_loader)
-        return train_loss, train_metric
+        return train_loss, train_metrics
 
     def test(self, val_loader):
         self.model.eval()
@@ -62,6 +56,6 @@ class CNNTrainer(BaseTrainer):
 
         all_targets = torch.cat(all_targets).cpu()
         all_preds = torch.cat(all_preds).cpu()
-        test_metric = self.metric(all_preds.argmax(dim=1), all_targets)
+        test_metrics = self.get_metrics(all_preds, all_targets)
         test_loss /= len(val_loader)
-        return test_loss, test_metric
+        return test_loss, test_metrics

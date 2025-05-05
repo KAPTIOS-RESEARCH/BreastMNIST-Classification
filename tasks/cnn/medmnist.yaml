@@ -1,4 +1,4 @@
-name: cnn_medmnist
+name: cnn_medmnist_4conv_scheduler
 seed: 1234
 track: &track True
 model:
@@ -6,10 +6,10 @@ model:
   module_name: src.models.cnn
   parameters:
     in_channels: 1
-    out_channels: &out_channels 64
+    out_channels: &out_channels 11
     img_size: &img_size 64
     base_channels: 32
-    num_blocks: 3
+    num_blocks: 4
     dropout: 0.5
 
 dataloader:
@@ -38,12 +38,19 @@ trainer:
       module_name: torch.nn
       parameters:
 
-    metric:
-      class_name: Accuracy
-      module_name: torchmetrics
-      parameters:
-        task: multiclass
-        num_classes: *out_channels
+    metrics:
+      - accuracy:
+        class_name: Accuracy
+        module_name: torchmetrics
+        parameters:
+          task: multiclass
+          num_classes: *out_channels
+      - auroc:
+        class_name: AUROC
+        module_name: torchmetrics
+        parameters:
+          task: multiclass
+          num_classes: *out_channels
 
 experiment:
   class_name: BaseExperiment
