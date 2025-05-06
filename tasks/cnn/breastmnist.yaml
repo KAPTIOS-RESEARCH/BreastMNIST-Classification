@@ -1,58 +1,54 @@
-name: SpikingCNN_OrganSMNIST
+name: CNN_BreastMNIST
 seed: 1234
-track: &track True
+track: &track False
 model:
-  class_name: CSNN
-  module_name: src.models.csnn
+  class_name: CNN
+  module_name: src.models.cnn
   parameters:
     in_channels: 1
-    out_channels: &out_channels 11
+    out_channels: &out_channels 1
     img_size: &img_size 64
-    n_steps: 5
-    encoding_method: direct
-    num_blocks: 3
     base_channels: 32
-    dropout: 0.6
-    spike_threshold: 0.8
+    num_blocks: 3
+    dropout: 0.4
+
 dataloader:
   class_name: MedMNISTDataloader
   module_name: src.data.loaders.medmnist
   parameters:
     data_dir: ./data
-    dataset_name: OrganSMNIST
+    dataset_name: BreastMNIST
     batch_size: 64
     num_workers: 8
     image_size: *img_size
     debug: False
 
 trainer:
-  class_name: MedMNISTTrainer
-  module_name: tasks.snn.trainer
+  class_name: CNNTrainer
+  module_name: tasks.cnn.trainer
   parameters:
     num_epochs: 100
     early_stopping_patience: null
-    lr_scheduler: plateau
-    lr: 0.00001
+    lr_scheduler: 
+    lr: 0.0001
     weight_decay: 0.0001
     track: *track
     loss:
-      class_name: MSELoss
+      class_name: BCELoss
       module_name: torch.nn
       parameters:
-
     metrics:
       - accuracy:
         class_name: Accuracy
         module_name: torchmetrics
         parameters:
-          task: multiclass
-          num_classes: *out_channels
+          task: binary
       - auroc:
         class_name: AUROC
         module_name: torchmetrics
         parameters:
-          task: multiclass
-          num_classes: *out_channels
+          task: binary
+
 experiment:
   class_name: BaseExperiment
   module_name: src.core.experiment

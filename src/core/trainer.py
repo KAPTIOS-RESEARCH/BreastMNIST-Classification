@@ -1,7 +1,6 @@
 import wandb
 import logging
 import time
-import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from torch.optim import Adam
@@ -39,10 +38,17 @@ class BaseTrainer(object):
             self.lr_scheduler = ExponentialLR(
                 optimizer=self.optimizer, gamma=0.97)
 
-        # LOSS FUNCTION
+        self.is_binary = getattr(self.model, 'n_output', 1) == 1
+        
         self.criterion = instanciate_module(parameters['loss']['module_name'],
-                                            parameters['loss']['class_name'],
-                                            parameters['loss']['parameters'])
+                                    parameters['loss']['class_name'],
+                                    parameters['loss']['parameters'])
+        
+        if not self.criterion:
+            if self.is_binary:
+                self.criterion = nn.BCELoss()
+            else:
+                self.criterion = nn.MSELoss()
 
         self.metrics = {}
         
@@ -57,13 +63,21 @@ class BaseTrainer(object):
     def test(self, dl: DataLoader):
         raise NotImplementedError
 
+    def _format_targets(self, targets):
+        if self.is_binary:
+            return targets.float().unsqueeze(1)
+        else:
+            return nn.functional.one_hot(targets.long(), num_classes=self.model.n_output).float()
+
     def get_metrics(self, all_preds, all_targets):
         if self.metrics is None:
             return None
-
+        
         preprocess_map = {
-            'Accuracy': lambda preds, targets: (preds.argmax(dim=1), targets),
-            'AUROC': lambda preds, targets: (torch.softmax(preds, dim=1), targets),
+            'Accuracy': lambda preds, targets: 
+                (preds.squeeze() if preds.shape[1] == 1 else preds.argmax(dim=1), targets),
+            'AUROC': lambda preds, targets: 
+                (preds.squeeze() if preds.shape[1] == 1 else preds.softmax(dim=1), targets),
         }
 
         metric_results = {}

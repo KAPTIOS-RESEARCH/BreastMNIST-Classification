@@ -9,34 +9,32 @@ import torch.nn.functional as F
 class MedMNISTTrainer(BaseTrainer):
 
     def __init__(self, model: nn.Module, parameters: dict, device: str):
-        super(MedMNISTTrainer, self).__init__(model, parameters, device)
-        if not self.criterion:
-            self.criterion = nn.MSELoss()
-    
+        super(MedMNISTTrainer, self).__init__(model, parameters, device)        
+        
     def train(self, train_loader):
         self.model.train()
         train_loss = 0.0
         all_preds = []
         all_targets = []
+        
         with tqdm(train_loader, leave=False, desc="Running training phase") as pbar:
             for sample in train_loader:
                 data, targets = sample
                 data, targets = data.to(self.device), targets.to(self.device)
-                one_hot_targets = F.one_hot(
-                    targets.long(), self.model.n_output).float()
+                formatted_targets = self._format_targets(targets)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
-                loss = self.criterion(outputs, one_hot_targets.squeeze(1))
+                loss = self.criterion(outputs, formatted_targets)
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss.item()
-                all_preds.append(outputs)
-                all_targets.append(targets)
+                all_preds.append(outputs.cpu())
+                all_targets.append(targets.cpu())
                 functional.reset_net(self.model)
                 pbar.update(1)
 
-        all_targets = torch.cat(all_targets).cpu()
-        all_preds = torch.cat(all_preds).cpu()
+        all_targets = torch.cat(all_targets)
+        all_preds = torch.cat(all_preds)
         
         train_metrics = self.get_metrics(all_preds, all_targets)
         train_loss /= len(train_loader)
@@ -54,17 +52,16 @@ class MedMNISTTrainer(BaseTrainer):
                     data, targets = data.to(
                         self.device), targets.to(self.device)
                     outputs = self.model(data)
-                    one_hot_targets = F.one_hot(
-                        targets.long(), self.model.n_output).float()
-                    loss = self.criterion(outputs, one_hot_targets.squeeze(1))
+                    formatted_targets = self._format_targets(targets)
+                    loss = self.criterion(outputs, formatted_targets)
                     test_loss += loss.item()
-                    all_preds.append(outputs)
-                    all_targets.append(targets)
+                    all_preds.append(outputs.cpu())
+                    all_targets.append(targets.cpu())
                     functional.reset_net(self.model)
                     pbar.update(1)
 
-        all_targets = torch.cat(all_targets).cpu()
-        all_preds = torch.cat(all_preds).cpu()
+        all_targets = torch.cat(all_targets)
+        all_preds = torch.cat(all_preds)
         test_metrics = self.get_metrics(all_preds, all_targets)
         test_loss /= len(val_loader)
         return test_loss, test_metrics

@@ -17,6 +17,8 @@ class MedMNISTDataset(Dataset):
         transform=None
     ):
         self.transform = transform or transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomVerticalFlip(p=0.5),
             transforms.ToTensor(),
             transforms.Normalize((0,), (1,))
         ])

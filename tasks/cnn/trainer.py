@@ -8,9 +8,7 @@ from src.models.base import BaseTorchModel
 class CNNTrainer(BaseTrainer):
     def __init__(self, model: BaseTorchModel, parameters: dict, device: str):
         super(CNNTrainer, self).__init__(model, parameters, device)
-        if not self.criterion:
-            self.criterion = nn.CrossEntropyLoss()
-        
+
     def train(self, train_loader):
         self.model.train()
         train_loss = 0.0
@@ -20,9 +18,10 @@ class CNNTrainer(BaseTrainer):
             for sample in train_loader:
                 data, targets = sample
                 data, targets = data.to(self.device), targets.to(self.device)
+                formatted_targets = self._format_targets(targets)
                 self.optimizer.zero_grad()
                 outputs = self.model(data)
-                loss = self.criterion(outputs, targets)
+                loss = self.criterion(outputs, formatted_targets)
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss.item()
@@ -47,8 +46,9 @@ class CNNTrainer(BaseTrainer):
                 for idx, sample in enumerate(val_loader):
                     data, targets = sample
                     data, targets = data.to(self.device), targets.to(self.device)
+                    formatted_targets = self._format_targets(targets)
                     outputs = self.model(data)
-                    loss = self.criterion(outputs, targets)
+                    loss = self.criterion(outputs, formatted_targets)
                     test_loss += loss.item()
                     all_preds.append(outputs)
                     all_targets.append(targets)
