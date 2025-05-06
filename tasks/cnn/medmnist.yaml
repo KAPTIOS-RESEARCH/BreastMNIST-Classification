@@ -1,4 +1,4 @@
-name: cnn_medmnist_4conv_scheduler
+name: CNN_OrganSMNIST
 seed: 1234
 track: &track True
 model:
@@ -9,8 +9,8 @@ model:
     out_channels: &out_channels 11
     img_size: &img_size 64
     base_channels: 32
-    num_blocks: 4
-    dropout: 0.5
+    num_blocks: 3
+    dropout: 0.4
 
 dataloader:
   class_name: MedMNISTDataloader
@@ -27,17 +27,16 @@ trainer:
   class_name: CNNTrainer
   module_name: tasks.cnn.trainer
   parameters:
-    num_epochs: 30
+    num_epochs: 100
     early_stopping_patience: null
-    lr_scheduler: plateau
-    lr: 0.001
+    lr_scheduler: 
+    lr: 0.0001
     weight_decay: 0.0001
     track: *track
     loss:
       class_name: CrossEntropyLoss
       module_name: torch.nn
       parameters:
-
     metrics:
       - accuracy:
         class_name: Accuracy

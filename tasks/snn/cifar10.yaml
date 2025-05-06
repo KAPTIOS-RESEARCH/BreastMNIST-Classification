@@ -27,7 +27,7 @@ trainer:
   class_name: MedMNISTTrainer
   module_name: tasks.snn.trainer
   parameters:
-    num_epochs: 30
+    num_epochs: 100
     early_stopping_patience: null
     lr_scheduler: plateau
     lr: 0.0001

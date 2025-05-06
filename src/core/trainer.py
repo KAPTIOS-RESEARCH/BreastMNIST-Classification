@@ -60,14 +60,21 @@ class BaseTrainer(object):
     def get_metrics(self, all_preds, all_targets):
         if self.metrics is None:
             return None
-        else:
-            metric_results = {}
-            for key, metric in self.metrics.items():
-                if key == 'Accuracy':
-                    metric_results[key] = metric(all_preds.argmax(dim=1), all_targets)
-                elif key == 'AUROC':
-                    metric_results[key] = metric(torch.softmax(all_preds, dim=1), all_targets)
-            return metric_results 
+
+        preprocess_map = {
+            'Accuracy': lambda preds, targets: (preds.argmax(dim=1), targets),
+            'AUROC': lambda preds, targets: (torch.softmax(preds, dim=1), targets),
+        }
+
+        metric_results = {}
+        for key, metric in self.metrics.items():
+            if key in preprocess_map:
+                preds, targets = preprocess_map[key](all_preds, all_targets)
+                metric_results[key] = metric(preds, targets)
+            else:
+                metric_results[key] = metric(all_preds, all_targets)
+
+        return metric_results
         
     def fit(self, train_dl, test_dl, log_dir: str):
         start_time = time.time()

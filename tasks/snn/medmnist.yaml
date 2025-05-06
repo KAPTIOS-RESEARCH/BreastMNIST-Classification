@@ -1,4 +1,4 @@
-name: csnn_medmnist_3conv_scheduler
+name: SpikingCNN_OrganSMNIST
 seed: 1234
 track: &track True
 model:
@@ -12,7 +12,7 @@ model:
     encoding_method: direct
     num_blocks: 3
     base_channels: 32
-    dropout: 0.4
+    dropout: 0.6
     spike_threshold: 0.8
 dataloader:
   class_name: MedMNISTDataloader
@@ -29,11 +29,11 @@ trainer:
   class_name: MedMNISTTrainer
   module_name: tasks.snn.trainer
   parameters:
-    num_epochs: 30
+    num_epochs: 100
     early_stopping_patience: null
     lr_scheduler: plateau
     lr: 0.00001
-    weight_decay: 0.
+    weight_decay: 0.0001
     track: *track
     loss:
       class_name: MSELoss
